@@ -1,0 +1,536 @@
+assg 2
+#include <iostream>
+#include <vector>
+#include <limits>
+#include <queue>
+
+using namespace std;
+
+const int INF = numeric_limits<int>::max();
+
+void dijkstra(int n, vector<vector<pair<int, int>>> &graph, int src) {
+    vector<int> dist(n, INF);
+    vector<int> parent(n, -1);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+
+    dist[src] = 0;
+    pq.push(make_pair(0, src));
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        for (auto &edge : graph[u]) {
+            int v = edge.first;
+            int weight = edge.second;
+
+            if (dist[v] > dist[u] + weight) {
+                dist[v] = dist[u] + weight;
+                parent[v] = u;
+                pq.push(make_pair(dist[v], v));
+            }
+        }
+    }
+    cout << "\nNode\tDistance from Source " << src << "\tPath\n";
+    for (int i = 0; i < n; ++i) {
+        cout << i << "\t\t";
+        if (dist[i] == INF) {
+            cout << "∞\t\t\tNo path\n";
+            continue;
+        }
+        cout << dist[i] << "\t\t\t";
+
+        vector<int> path;
+        for (int v = i; v != -1; v = parent[v])
+            path.push_back(v);
+        for (int j = path.size() - 1; j >= 0; --j)
+            cout << path[j] << (j ? " -> " : "");
+        cout << endl;
+    }
+}
+int main() {
+    int n, m;
+    cout << "Enter number of nodes: ";
+    cin >> n;
+
+    cout << "Enter number of edges: ";
+    cin >> m;
+
+    vector<vector<pair<int, int>>> graph(n);
+    cout << "Enter edges in the format: from to weight\n";
+    for (int i = 0; i < m; ++i) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        graph[u].push_back({v, w});
+    }
+    int source;
+    cout << "Enter source node (0 to " << n - 1 << "): ";
+    cin >> source;
+    dijkstra(n, graph, source);
+    return 0;
+}
+
+
+
+assg 3a)1)
+#include <winsock2.h>
+#include <iostream>
+#pragma comment(lib, "ws2_32.lib")
+
+#define PORT 8080
+
+int main() {
+    WSADATA wsa;
+    SOCKET server_fd, new_socket;
+    struct sockaddr_in server, client;
+    int c;
+    char buffer[1024] = {0};
+    const char* hello = "Hello from server";
+
+    WSAStartup(MAKEWORD(2,2), &wsa);
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == INVALID_SOCKET) {
+        std::cerr << "Socket creation failed\n";
+        return 1;
+    }
+
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(PORT);
+
+    if (bind(server_fd, (struct sockaddr*)&server, sizeof(server)) == SOCKET_ERROR) {
+        std::cerr << "Bind failed\n";
+        return 1;
+    }
+
+    listen(server_fd, 3);
+    std::cout << "Server listening on port " << PORT << "...\n";
+
+    c = sizeof(struct sockaddr_in);
+    new_socket = accept(server_fd, (struct sockaddr*)&client, &c);
+    if (new_socket == INVALID_SOCKET) {
+        std::cerr << "Accept failed\n";
+        return 1;
+    }
+
+    recv(new_socket, buffer, sizeof(buffer), 0);
+    std::cout << "Client: " << buffer << "\n";
+
+    send(new_socket, hello, strlen(hello), 0);
+    std::cout << "Hello message sent\n";
+
+    closesocket(new_socket);
+    closesocket(server_fd);
+    WSACleanup();
+    return 0;
+}
+//  1. Compile the Windows Server Program
+// g++ hello_server_win.cpp -o hello_server_win -lws2_32
+
+// Run the server:
+// .\hello_server_win.exe
+
+//  2. Compile the Windows Client Program
+// g++ hello_client_win.cpp -o hello_client_win -lws2_32
+
+// Run the client:
+// .\hello_client_win.exe
+
+
+#include <winsock2.h>
+#include <iostream>
+#pragma comment(lib, "ws2_32.lib")
+
+#define PORT 8080
+
+int main() {
+    WSADATA wsa;
+    SOCKET sock;
+    struct sockaddr_in server;
+    char buffer[1024] = {0};
+    const char* hello = "Hello from client";
+
+    WSAStartup(MAKEWORD(2,2), &wsa);
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
+        std::cerr << "Socket creation failed\n";
+        return 1;
+    }
+
+    server.sin_family = AF_INET;
+    server.sin_port = htons(PORT);
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        std::cerr << "Connect failed\n";
+        return 1;
+    }
+
+    send(sock, hello, strlen(hello), 0);
+    std::cout << "Hello message sent\n";
+
+    recv(sock, buffer, sizeof(buffer), 0);
+    std::cout << "Server: " << buffer << "\n";
+
+    closesocket(sock);
+    WSACleanup();
+    return 0;
+}
+//  1. Compile the Windows Server Program
+// g++ hello_server_win.cpp -o hello_server_win -lws2_32
+
+// Run the server:
+// .\hello_server_win.exe
+
+//  2. Compile the Windows Client Program
+// g++ hello_client_win.cpp -o hello_client_win -lws2_32
+
+// Run the client:
+// .\hello_client_win.exe
+
+
+assg 3a)2)
+#include <iostream>
+#include <fstream>
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+
+#define PORT 9090
+
+int main() {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in serv_addr{};
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr));
+
+    std::string filename = "sample.txt"; // file on server
+    send(sock, filename.c_str(), (int)filename.size(), 0);
+
+    std::ofstream outfile("received_" + filename, std::ios::binary);
+    char buffer[1024];
+    int bytesRead;
+    while ((bytesRead = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+        outfile.write(buffer, bytesRead);
+    }
+
+    outfile.close();
+    closesocket(sock);
+    WSACleanup();
+    return 0;
+}
+//  Compile File Server:
+// g++ file_server.cpp -o file_server -lws2_32
+
+//  Compile File Client:
+// g++ file_client.cpp -o file_client -lws2_32
+
+//  Run Server:
+// .\file_server.exe
+
+//  Run Client:
+// .\file_client.exe
+
+
+#include <iostream>
+#include <fstream>
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+
+#define PORT 9090
+
+int main() {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+
+    SOCKET server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
+
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    bind(server_fd, (sockaddr*)&address, sizeof(address));
+    listen(server_fd, 3);
+
+    std::cout << "Waiting for file request on port " << PORT << "..." << std::endl;
+
+    int addrlen = sizeof(address);
+    SOCKET new_socket = accept(server_fd, (sockaddr*)&address, &addrlen);
+
+    char buffer[1024] = {0};
+    int r = recv(new_socket, buffer, sizeof(buffer) - 1, 0);
+    buffer[r] = '\0';
+    std::string filename = buffer;
+
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        const char* msg = "ERROR: file not found";
+        send(new_socket, msg, strlen(msg), 0);
+        closesocket(new_socket);
+        closesocket(server_fd);
+        WSACleanup();
+        return 1;
+    }
+
+    while (!file.eof()) {
+        file.read(buffer, sizeof(buffer));
+        std::streamsize got = file.gcount();
+        if (got > 0) send(new_socket, buffer, (int)got, 0);
+    }
+
+    std::cout << "File sent successfully." << std::endl;
+    file.close();
+    closesocket(new_socket);
+    closesocket(server_fd);
+    WSACleanup();
+    return 0;
+}
+//  Compile File Server:
+// g++ file_server.cpp -o file_server -lws2_32
+
+//  Compile File Client:
+// g++ file_client.cpp -o file_client -lws2_32
+
+//  Run Server:
+// .\file_server.exe
+
+//  Run Client:
+// .\file_client.exe
+
+
+assg 3b)1)
+#include <iostream>
+#include <winsock2.h>
+using namespace std;
+
+#define PORT 8080
+#define BUF_SIZE 1024
+
+int main() {
+    WSADATA wsa;
+    SOCKET sockfd;
+    sockaddr_in servaddr{};
+    int len = sizeof(servaddr);
+    char buffer[BUF_SIZE];
+
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        cout << "WSAStartup failed\n";
+        return 1;
+    }
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        cout << "Socket creation failed\n";
+        return 1;
+    }
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Localhost
+
+    const char *msg = "Hello from Client!";
+    sendto(sockfd, msg, strlen(msg), 0, (sockaddr*)&servaddr, len);
+
+    recvfrom(sockfd, buffer, BUF_SIZE, 0, (sockaddr*)&servaddr, &len);
+    cout << "Server: " << buffer << endl;
+
+    closesocket(sockfd);
+    WSACleanup();
+    return 0;
+}
+// g++ udp_server_win.cpp -o server -lws2_32
+// g++ udp_client_win.cpp -o client -lws2_32
+
+// .\server
+// .\client
+
+#include <iostream>
+#include <winsock2.h>
+using namespace std;
+
+#define PORT 8080
+#define BUF_SIZE 1024
+
+int main() {
+    WSADATA wsa;
+    SOCKET sockfd;
+    sockaddr_in servaddr{}, cliaddr{};
+    int len = sizeof(cliaddr);
+    char buffer[BUF_SIZE];
+
+    // Initialize Winsock
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        cout << "WSAStartup failed\n";
+        return 1;
+    }
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        cout << "Socket creation failed\n";
+        return 1;
+    }
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+
+    if (bind(sockfd, (sockaddr*)&servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
+        cout << "Bind failed\n";
+        return 1;
+    }
+
+    cout << "UDP Server running... Waiting for messages.\n";
+    recvfrom(sockfd, buffer, BUF_SIZE, 0, (sockaddr*)&cliaddr, &len);
+    cout << "Client: " << buffer << endl;
+
+    const char *msg = "Hello from Server!";
+    sendto(sockfd, msg, strlen(msg), 0, (sockaddr*)&cliaddr, len);
+
+    closesocket(sockfd);
+    WSACleanup();
+    return 0;
+}
+// g++ udp_server_win.cpp -o server -lws2_32
+// g++ udp_client_win.cpp -o client -lws2_32
+
+// .\server
+// .\client
+
+
+assg 3b)2)
+#include <iostream>
+#include <winsock2.h>
+using namespace std;
+
+#define PORT 9090
+#define BUF_SIZE 1024
+
+int main() {
+    WSADATA wsa;
+    SOCKET sockfd;
+    sockaddr_in servaddr{};
+    int len = sizeof(servaddr);
+    char buffer[BUF_SIZE];
+
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        cout << "WSAStartup failed\n";
+        return 1;
+    }
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        cout << "Socket creation failed\n";
+        return 1;
+    }
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    char op[10];
+    double angle;
+    cout << "Enter operation (sin/cos/tan): ";
+    cin >> op;
+    cout << "Enter angle in degrees: ";
+    cin >> angle;
+
+    snprintf(buffer, BUF_SIZE, "%s %lf", op, angle);
+    sendto(sockfd, buffer, strlen(buffer), 0, (sockaddr*)&servaddr, len);
+
+    recvfrom(sockfd, buffer, BUF_SIZE, 0, (sockaddr*)&servaddr, &len);
+    buffer[BUF_SIZE - 1] = '\0'; 
+    cout << "Server: " << buffer << endl;
+
+    closesocket(sockfd);
+    WSACleanup();
+    return 0;
+}
+// g++ udp_trig_server_win.cpp -o trig_server -lws2_32
+// g++ udp_trig_client_win.cpp -o trig_client -lws2_32
+
+// .\trig_server
+// .\trig_client
+
+#include <iostream>
+#include <winsock2.h>
+#include <cmath>
+using namespace std;
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#define PORT 9090
+#define BUF_SIZE 1024
+
+int main() {
+    WSADATA wsa;
+    SOCKET sockfd;
+    sockaddr_in servaddr{}, cliaddr{};
+    int len = sizeof(cliaddr);
+    char buffer[BUF_SIZE];
+
+    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
+        cout << "WSAStartup failed\n";
+        return 1;
+    }
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd == INVALID_SOCKET) {
+        cout << "Socket creation failed\n";
+        return 1;
+    }
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+
+    if (bind(sockfd, (sockaddr*)&servaddr, sizeof(servaddr)) == SOCKET_ERROR) {
+        cout << "Bind failed\n";
+        return 1;
+    }
+
+    cout << "UDP Trigonometry Server running...\n";
+
+    int bytes = recvfrom(sockfd, buffer, BUF_SIZE, 0, (sockaddr*)&cliaddr, &len);
+    buffer[bytes] = '\0';   //  FIXED
+
+    cout << "Request: " << buffer << endl;
+
+    char op[10];
+    double angle, result = 0.0;
+    sscanf(buffer, "%s %lf", op, &angle);
+
+    // Convert degrees to radians
+    angle = angle * M_PI / 180.0;
+
+    if (strcmp(op, "sin") == 0) result = sin(angle);
+    else if (strcmp(op, "cos") == 0) result = cos(angle);
+    else if (strcmp(op, "tan") == 0) result = tan(angle);
+    else {
+        snprintf(buffer, BUF_SIZE, "Invalid operation");
+        sendto(sockfd, buffer, strlen(buffer), 0, (sockaddr*)&cliaddr, len);
+        return 0;
+    }
+
+    snprintf(buffer, BUF_SIZE, "Result: %.4f", result);
+    sendto(sockfd, buffer, strlen(buffer), 0, (sockaddr*)&cliaddr, len);
+
+    closesocket(sockfd);
+    WSACleanup();
+    return 0;
+}
+// g++ udp_trig_server_win.cpp -o trig_server -lws2_32
+// g++ udp_trig_client_win.cpp -o trig_client -lws2_32
+
+// .\trig_server
+// .\trig_client
